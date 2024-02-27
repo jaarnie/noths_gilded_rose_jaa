@@ -1,3 +1,6 @@
+require 'bundler/setup'
+Bundler.require
+
 class GildedRose
 
   def initialize(items)
