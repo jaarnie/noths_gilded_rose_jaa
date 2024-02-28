@@ -30,6 +30,10 @@ class GildedRose
         next
       end
 
+      if conjured_item?(item)
+        item.quality -= 2
+      end
+
       item.sell_in -= 1
     end
   end
@@ -37,11 +41,14 @@ class GildedRose
   private
 
   def normal_item?(item)
-    !legendary_item?(item) && !increased_quality_item?(item) && !backstage_passes?(item)
+    !backstage_passes?(item) &&
+    !increased_quality_item?(item) && 
+    !legendary_item?(item) && 
+    !conjured_item?(item)
   end
 
   def backstage_passes?(item)
-    item.name.start_with?("Backstage passes")
+    item.name.downcase.start_with?("backstage passes")
   end
 
   def increased_quality_item?(item)
@@ -50,6 +57,10 @@ class GildedRose
   
   def legendary_item?(item)
     LEGENDARY_ITEMS.include?(item.name)
+  end
+
+  def conjured_item?(item)
+    item.name.downcase.start_with?("conjured")
   end
 
   def update_normal_item(item)

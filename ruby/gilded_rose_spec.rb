@@ -116,7 +116,7 @@ RSpec.describe GildedRose do
     end
 
     context "when counjured items" do
-      xit "decreases quality twice as fast" do
+      it "decreases quality twice as fast" do
         items = [Item.new(name="Conjured Mana Cake", sell_in=3, quality=6)]
 
         expect do
