@@ -2,57 +2,77 @@ require 'bundler/setup'
 Bundler.require
 
 class GildedRose
+  LEGENDARY_ITEMS = ["Sulfuras, Hand of Ragnaros"]
+  INCREASE_QUALITY_ITEMS = ["Aged Brie"]
+
 
   def initialize(items)
-    @items = items
+    @items = Array(items)
   end
 
-  def update_quality()
+  def update_quality
     @items.each do |item|
-      if item.name != "Aged Brie" and item.name != "Backstage passes to a TAFKAL80ETC concert"
-        if item.quality > 0
-          if item.name != "Sulfuras, Hand of Ragnaros"
-            item.quality = item.quality - 1
-          end
-        end
-      else
-        if item.quality < 50
-          item.quality = item.quality + 1
-          if item.name == "Backstage passes to a TAFKAL80ETC concert"
-            if item.sell_in < 11
-              if item.quality < 50
-                item.quality = item.quality + 1
-              end
-            end
-            if item.sell_in < 6
-              if item.quality < 50
-                item.quality = item.quality + 1
-              end
-            end
-          end
-        end
+      next unless item.quality.positive? && item.quality <= 50
+
+      if normal_item?(item)
+        update_normal_item(item)
       end
-      if item.name != "Sulfuras, Hand of Ragnaros"
-        item.sell_in = item.sell_in - 1
+
+      if backstage_passes?(item) && item.quality < 50
+        update_backstage_passes_item(item)
       end
-      if item.sell_in < 0
-        if item.name != "Aged Brie"
-          if item.name != "Backstage passes to a TAFKAL80ETC concert"
-            if item.quality > 0
-              if item.name != "Sulfuras, Hand of Ragnaros"
-                item.quality = item.quality - 1
-              end
-            end
-          else
-            item.quality = item.quality - item.quality
-          end
-        else
-          if item.quality < 50
-            item.quality = item.quality + 1
-          end
-        end
+
+      if increased_quality_item?(item) && item.quality < 50
+        item.quality += 1
       end
+
+      if legendary_item?(item)
+        next
+      end
+
+      item.sell_in -= 1
     end
+  end
+
+  private
+
+  def normal_item?(item)
+    !legendary_item?(item) && !increased_quality_item?(item) && !backstage_passes?(item)
+  end
+
+  def backstage_passes?(item)
+    item.name.start_with?("Backstage passes")
+  end
+
+  def increased_quality_item?(item)
+    INCREASE_QUALITY_ITEMS.include?(item.name)
+  end
+  
+  def legendary_item?(item)
+    LEGENDARY_ITEMS.include?(item.name)
+  end
+
+  def update_normal_item(item)
+    if item.sell_in > 0
+      item.quality -= 1
+    else
+      item.quality -= 2
+    end
+  end
+  
+  def update_backstage_passes_item(item)
+    sell_in = item.sell_in
+    quality = if (6..10).cover?(sell_in)
+                2
+              elsif (1..5).cover?(sell_in)
+                3
+              elsif sell_in.zero?
+                return item.quality = 0
+              else
+                1
+              end
+
+    item.quality += quality
   end
 end
 

@@ -29,7 +29,7 @@ RSpec.describe GildedRose do
       end
     end
 
-    context "when the sell by date has passed for non legendary/special items" do
+    context "when the sell by date has passed for non-legendary/special items" do
       it "decreases quality twice as fast" do
         items = [Item.new(name="Elixir of the Mongoose", sell_in=0, quality=7)]
 
@@ -51,7 +51,7 @@ RSpec.describe GildedRose do
 
     context "when aged brie" do
       it "increases quality as it gets older" do
-        items = [Item.new(name="Aged Brie", sell_in=2, quality=0)]
+        items = [Item.new(name="Aged Brie", sell_in=2, quality=10)]
 
         expect do
           GildedRose.new(items).update_quality
@@ -102,6 +102,16 @@ RSpec.describe GildedRose do
             GildedRose.new(items).update_quality
           end.to change { items[0].quality }.to(0)
         end
+      end
+    end
+
+    context "when quality is at 0" do
+      it "does not update the item" do
+        items = [Item.new(name="foo", sell_in=2, quality=0)]
+
+        expect do
+          GildedRose.new(items).update_quality
+        end.to_not change { [items[0].quality, items[0].sell_in] }
       end
     end
 
