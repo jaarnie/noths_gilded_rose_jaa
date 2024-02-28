@@ -1,6 +1,11 @@
 require 'bundler/setup'
 Bundler.require
 
+require_relative 'updaters/normal_item_updater'
+require_relative 'updaters/backstage_passes_item_updater'
+require_relative 'updaters/increased_quality_item_updater'
+require_relative 'updaters/conjured_item_updater'
+
 class GildedRose
   LEGENDARY_ITEMS = ["Sulfuras, Hand of Ragnaros"]
   INCREASE_QUALITY_ITEMS = ["Aged Brie"]
@@ -14,26 +19,19 @@ class GildedRose
     @items.each do |item|
       next unless item.quality.positive? && item.quality <= 50
 
-      if normal_item?(item)
-        update_normal_item(item)
-      end
+      updater = if legendary_item?(item)
+                  next
+                elsif backstage_passes?(item)
+                  Updaters::BackstagePassesItemUpdater.new(item)
+                elsif increased_quality_item?(item)
+                  Updaters::IncreasedQualityItemUpdater.new(item)
+                elsif conjured_item?(item)
+                  Updaters::ConjuredItemUpdater.new(item)
+                else
+                  Updaters::NormalItemUpdater.new(item)
+                end
 
-      if backstage_passes?(item) && item.quality < 50
-        update_backstage_passes_item(item)
-      end
-
-      if increased_quality_item?(item) && item.quality < 50
-        item.quality += 1
-      end
-
-      if legendary_item?(item)
-        next
-      end
-
-      if conjured_item?(item)
-        item.quality -= 2
-      end
-
+      updater.update
       item.sell_in -= 1
     end
   end
@@ -61,29 +59,6 @@ class GildedRose
 
   def conjured_item?(item)
     item.name.downcase.start_with?("conjured")
-  end
-
-  def update_normal_item(item)
-    if item.sell_in > 0
-      item.quality -= 1
-    else
-      item.quality -= 2
-    end
-  end
-  
-  def update_backstage_passes_item(item)
-    sell_in = item.sell_in
-    quality = if (6..10).cover?(sell_in)
-                2
-              elsif (1..5).cover?(sell_in)
-                3
-              elsif sell_in.zero?
-                return item.quality = 0
-              else
-                1
-              end
-
-    item.quality += quality
   end
 end
 
